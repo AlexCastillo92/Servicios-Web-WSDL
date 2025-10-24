@@ -53,3 +53,16 @@ const server = app.listen(PORT, () => {
   console.log(`Servidor escuchando en http://localhost:${PORT}`);
   soap.listen(server, '/calculator', serviceDefinition, wsdlXml);
 });
+
+// (A) — Opcional: habilitar CORS simple para pruebas externas (si sirves client.html en otro origen)
+const allowCORS = false; // cámbialo a true si lo necesitas
+if (allowCORS) {
+  const cors = require('cors');
+  app.use(cors()); // npm i cors
+}
+
+// (B) — Ruta para servir la UI
+const CLIENT_PATH = path.join(__dirname, 'client.html');
+app.get('/test', (_req, res) => {
+  res.sendFile(CLIENT_PATH);
+});
