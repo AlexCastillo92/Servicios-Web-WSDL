@@ -10,7 +10,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const WSDL_PATH = path.join(__dirname, 'calculator.wsdl');
-
+app.use(express.static(__dirname));
 // Implementación de las operaciones definidas en el WSDL (CalculatorPortType)
 const serviceDefinition = {
   CalculatorService: {
