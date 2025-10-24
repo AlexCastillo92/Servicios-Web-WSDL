@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions
+  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:tns="http://example.com/calculator"
+  targetNamespace="http://example.com/calculator"
+  name="CalculatorService">
+
+  <!-- 1) Tipos -->
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://example.com/calculator" elementFormDefault="qualified">
+      <!-- Requests -->
+      <xsd:element name="AddRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="a" type="xsd:double"/>
+            <xsd:element name="b" type="xsd:double"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="SubtractRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="a" type="xsd:double"/>
+            <xsd:element name="b" type="xsd:double"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="MultiplyRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="a" type="xsd:double"/>
+            <xsd:element name="b" type="xsd:double"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="DivideRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="a" type="xsd:double"/>
+            <xsd:element name="b" type="xsd:double"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- Responses -->
+      <xsd:element name="AddResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="result" type="xsd:double"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="SubtractResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="result" type="xsd:double"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="MultiplyResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="result" type="xsd:double"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="DivideResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="result" type="xsd:double"/>
+            <xsd:element name="message" type="xsd:string" minOccurs="0"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </wsdl:types>
+
+  <!-- 2) Mensajes -->
+  <wsdl:message name="AddRequestMessage">
+    <wsdl:part name="parameters" element="tns:AddRequest"/>
+  </wsdl:message>
+  <wsdl:message name="AddResponseMessage">
+    <wsdl:part name="parameters" element="tns:AddResponse"/>
+  </wsdl:message>
+
+  <wsdl:message name="SubtractRequestMessage">
+    <wsdl:part name="parameters" element="tns:SubtractRequest"/>
+  </wsdl:message>
+  <wsdl:message name="SubtractResponseMessage">
+    <wsdl:part name="parameters" element="tns:SubtractResponse"/>
+  </wsdl:message>
+
+  <wsdl:message name="MultiplyRequestMessage">
+    <wsdl:part name="parameters" element="tns:MultiplyRequest"/>
+  </wsdl:message>
+  <wsdl:message name="MultiplyResponseMessage">
+    <wsdl:part name="parameters" element="tns:MultiplyResponse"/>
+  </wsdl:message>
+
+  <wsdl:message name="DivideRequestMessage">
+    <wsdl:part name="parameters" element="tns:DivideRequest"/>
+  </wsdl:message>
+  <wsdl:message name="DivideResponseMessage">
+    <wsdl:part name="parameters" element="tns:DivideResponse"/>
+  </wsdl:message>
+
+  <!-- 3) PortType -->
+  <wsdl:portType name="CalculatorPortType">
+    <wsdl:operation name="Add">
+      <wsdl:input message="tns:AddRequestMessage"/>
+      <wsdl:output message="tns:AddResponseMessage"/>
+    </wsdl:operation>
+    <wsdl:operation name="Subtract">
+      <wsdl:input message="tns:SubtractRequestMessage"/>
+      <wsdl:output message="tns:SubtractResponseMessage"/>
+    </wsdl:operation>
+    <wsdl:operation name="Multiply">
+      <wsdl:input message="tns:MultiplyRequestMessage"/>
+      <wsdl:output message="tns:MultiplyResponseMessage"/>
+    </wsdl:operation>
+    <wsdl:operation name="Divide">
+      <wsdl:input message="tns:DivideRequestMessage"/>
+      <wsdl:output message="tns:DivideResponseMessage"/>
+    </wsdl:operation>
+  </wsdl:portType>
+
+  <!-- 4) Binding -->
+  <wsdl:binding name="CalculatorBinding" type="tns:CalculatorPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="Add">
+      <soap:operation soapAction="http://example.com/calculator/Add" style="document"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="Subtract">
+      <soap:operation soapAction="http://example.com/calculator/Subtract" style="document"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="Multiply">
+      <soap:operation soapAction="http://example.com/calculator/Multiply" style="document"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="Divide">
+      <soap:operation soapAction="http://example.com/calculator/Divide" style="document"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+
+  <!-- 5) Service -->
+  <wsdl:service name="CalculatorService">
+    <wsdl:port name="CalculatorPort" binding="tns:CalculatorBinding">
+      <soap:address location="http://localhost:3000/calculator"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
