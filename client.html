@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Calculadora SOAP (WSDL-first)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji"; margin: 24px; }
+    .card { max-width: 860px; margin: 0 auto; border: 1px solid #ddd; border-radius: 14px; padding: 20px; box-shadow: 0 6px 18px rgba(0,0,0,.06); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    label { font-weight: 600; margin-bottom: 4px; display:block; }
+    input, select, button, textarea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ccc; font-size: 15px; }
+    button { cursor: pointer; }
+    .btns { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+    .btns button { flex: 1 1 150px; }
+    .muted { color: #666; font-size: 14px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; font-size: 13px; white-space: pre-wrap; }
+    .ok { color: #0a7a2f; font-weight:700; }
+    .err { color: #b00020; font-weight:700; }
+    .badge { display:inline-block; background:#eef2ff; color:#4338ca; padding:2px 8px; border-radius:999px; font-size:12px; margin-left:8px;}
+    .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:16px;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Calculadora SOAP <span class="badge">WSDL-first</span></h1>
+    <p class="muted">
+      Prueba las operaciones <b>Add</b>, <b>Subtract</b>, <b>Multiply</b> y <b>Divide</b> del servicio en <code>/calculator</code>.
+      Esta página envía <i>POST SOAP</i> y muestra la respuesta.<br/>
+      Tip: Abre <code>/calculator?wsdl</code> en otra pestaña para ver el contrato.
+    </p>
+
+    <div class="row" style="margin-top:12px;">
+      <div>
+        <label for="endpoint">Endpoint</label>
+        <input id="endpoint" value="/calculator" />
+      </div>
+      <div>
+        <label for="operation">Operación</label>
+        <select id="operation">
+          <option value="Add">Add</option>
+          <option value="Subtract">Subtract</option>
+          <option value="Multiply">Multiply</option>
+          <option value="Divide">Divide</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px;">
+      <div>
+        <label for="a">Número A</label>
+        <input id="a" type="number" placeholder="e.g. 10" />
+      </div>
+      <div>
+        <label for="b">Número B</label>
+        <input id="b" type="number" placeholder="e.g. 5" />
+      </div>
+    </div>
+
+    <div class="btns">
+      <button id="btn-send">Enviar SOAP</button>
+      <button id="btn-fill-examples" type="button">Llenar ejemplos</button>
+      <a id="wsdlLink" href="/calculator?wsdl" target="_blank"><button type="button">Ver WSDL</button></a>
+    </div>
+
+    <h3 style="margin-top:24px;">Resultado</h3>
+    <div class="grid-2">
+      <div>
+        <label>Resultado numérico</label>
+        <div id="result" class="mono" style="border:1px dashed #bbb; padding:10px; border-radius:10px; min-height:42px;"></div>
+      </div>
+      <div>
+        <label>Mensaje (si aplica)</label>
+        <div id="message" class="mono" style="border:1px dashed #bbb; padding:10px; border-radius:10px; min-height:42px;"></div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:24px;">Request / Response (XML)</h3>
+    <div class="row">
+      <div>
+        <label>Request</label>
+        <textarea id="xml-out" class="mono" rows="12" readonly></textarea>
+      </div>
+      <div>
+        <label>Response</label>
+        <textarea id="xml-in" class="mono" rows="12" readonly></textarea>
+      </div>
+    </div>
+
+    <p class="muted" style="margin-top:8px;">
+      Esta UI construye el Envelope SOAP con namespace <code>http://example.com/calculator</code> y cabecera
+      <code>SOAPAction</code> acorde a la operación seleccionada.
+    </p>
+  </div>
+
+<script>
+  // Namespace del WSDL:
+  const NS = "http://example.com/calculator";
+
+  function buildSoapEnvelope(op, a, b) {
+    const reqName = op + "Request";
+    return `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:cal="${NS}">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <cal:${reqName}>
+      <cal:a>${a}</cal:a>
+      <cal:b>${b}</cal:b>
+    </cal:${reqName}>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+  }
+
+  // Extrae <result> (y opcionalmente <message>) según la operación
+  function parseSoapResult(op, xmlText) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlText, "text/xml");
+
+    // Manejo de SOAP Fault (si existiera)
+    const fault = doc.getElementsByTagNameNS("http://schemas.xmlsoap.org/soap/envelope/","Fault")[0];
+    if (fault) {
+      const faultString = fault.getElementsByTagName("faultstring")[0]?.textContent ?? "SOAP Fault";
+      return { result: null, message: "FAULT: " + faultString };
+    }
+
+    const respName = op + "Response";
+    const resultNode = doc.getElementsByTagName("result")[0] ||
+                       doc.getElementsByTagNameNS(NS, "result")[0] ||
+                       doc.getElementsByTagName(respName)[0]?.getElementsByTagName("result")[0];
+
+    const messageNode = doc.getElementsByTagName("message")[0] ||
+                        doc.getElementsByTagNameNS(NS, "message")[0];
+
+    return {
+      result: resultNode ? resultNode.textContent : null,
+      message: messageNode ? messageNode.textContent : ""
+    };
+  }
+
+  async function sendSoap() {
+    const endpoint = document.getElementById('endpoint').value.trim();
+    const op = document.getElementById('operation').value;
+    const a = document.getElementById('a').value;
+    const b = document.getElementById('b').value;
+
+    const xml = buildSoapEnvelope(op, a, b);
+    document.getElementById('xml-out').value = xml;
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': `"${NS}/${op}"`
+        },
+        body: xml,
+        // credentials: 'include' // (si tuvieras auth/sesiones)
+      });
+
+      const text = await res.text();
+      document.getElementById('xml-in').value = text;
+
+      const { result, message } = parseSoapResult(op, text);
+
+      document.getElementById('result').textContent = result !== null ? result : '(sin valor)';
+      document.getElementById('message').textContent = message || '(sin mensaje)';
+    } catch (err) {
+      document.getElementById('xml-in').value = String(err);
+      document.getElementById('result').innerHTML = '';
+      document.getElementById('message').innerHTML = 'Error al invocar el servicio (ver Response).';
+    }
+  }
+
+  document.getElementById('btn-send').addEventListener('click', sendSoap);
+
+  document.getElementById('btn-fill-examples').addEventListener('click', () => {
+    const op = document.getElementById('operation').value;
+    const a = document.getElementById('a');
+    const b = document.getElementById('b');
+    switch (op) {
+      case 'Add': a.value = 10; b.value = 5; break;
+      case 'Subtract': a.value = 10; b.value = 3; break;
+      case 'Multiply': a.value = 7; b.value = 6; break;
+      case 'Divide': a.value = 8; b.value = 0; break; // prueba /0 para ver message
+    }
+  });
+</script>
+</body>
+</html>
